@@ -1,5 +1,3 @@
-// code built with help of https://docs.opencv.org/4.x/d5/dc4/tutorial_video_input_psnr_ssim.html
-
 // C++ includes
 #include <iostream>
 #include <string>
@@ -17,27 +15,41 @@ using namespace std;
 
 int main(int argc, char** argv) {
 
-    if (argc != 3) {
+    Mat frame;
 
-        cout << "Missing parameters." << endl;
-        return -1;
+    VideoCapture capture;
 
-    }
+    int deviceID = 0;
+    int apiID = CAP_ANY;
 
-    Mat image;
-    image = imread(argv[1], IMREAD_COLOR);
+    capture.open(deviceID, apiID);
 
-    if (!image.data) {
+    if (!capture.isOpened()) {
 
-        printf("No image data.\n");
-        return -1;
+        cerr << "Cannot find camera." << endl;
 
     }
 
-    namedWindow("Display Image", WINDOW_AUTOSIZE);
-    imshow("Display Image", image);
+    for (;;) {
 
-    waitKey(0);
+        capture.read(frame);
+
+        if (frame.empty()) {
+
+            cerr << "Recieved empty frame." << endl;
+            break;
+
+        }
+
+        imshow("Live", frame);
+
+        if (waitKey(5) >= 0) {
+
+            break;
+
+        }
+
+    }
 
     return 0;
     
