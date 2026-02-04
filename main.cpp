@@ -1,3 +1,5 @@
+// this code was made following this tutorial: https://libcamera.org/guides/application-developer.html
+
 // C++ includes
 #include <iostream>
 #include <string>
