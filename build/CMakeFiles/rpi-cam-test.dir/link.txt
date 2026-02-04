@@ -1,1 +1,0 @@
-/usr/bin/c++ -g -rdynamic "CMakeFiles/rpi-cam-test.dir/main.cpp.o" -o rpi-cam-test  -lcamera -lcamera-base 
