@@ -4,12 +4,19 @@ project(rpi-cam-test VERSION 0.1.0)
 include(CTest)
 enable_testing()
 
-find_package(OpenCV REQUIRED)
-include_directories(${OpenCV_INCLUDE_DIRS})
+
+# find_package(OpenCV REQUIRED)
+find_package(PkgConfig REQUIRED)
+
+pkg_check_modules(LIBCAMERA REQUIRED IMPORTED_TARGET libcamera)
+
+
+# include_directories(${OpenCV_INCLUDE_DIRS})
 
 add_executable(rpi-cam-test main.cpp)
 
-target_link_libraries(rpi-cam-test ${OpenCV_LIBS})
+# target_link_libraries(rpi-cam-test ${OpenCV_LIBS})
+target_link_libraries(rpi-cam-test PkgConfig::LIBCAMERA)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})

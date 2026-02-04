@@ -3,54 +3,69 @@
 #include <string>
 #include <iomanip>
 #include <sstream>
+#include <memory>
+#include <thread>
+
+// libcamera includes
+#include <libcamera/libcamera.h>
 
 // OpenCV includes
-#include <opencv2/core.hpp>
-#include <opencv2/imgproc.hpp>
-#include <opencv2/videoio.hpp>
-#include <opencv2/highgui.hpp>
+// #include <opencv2/core.hpp>
+// #include <opencv2/imgproc.hpp>
+// #include <opencv2/videoio.hpp>
+// #include <opencv2/highgui.hpp>
 
-using namespace cv;
-using namespace std;
+// using namespace cv;
+using namespace libcamera;
+
+static std::shared_ptr<Camera> camera;
 
 int main(int argc, char** argv) {
 
-    Mat frame;
+    std::unique_ptr<CameraManager> cm = std::make_unique<CameraManager>();
+    cm->start();
 
-    VideoCapture capture;
+    for (auto const &camera : cm->cameras()) {
 
-    int deviceID = 0;
-    int apiID = CAP_ANY;
-
-    capture.open(deviceID, apiID);
-
-    if (!capture.isOpened()) {
-
-        cerr << "Cannot find camera." << endl;
+        std::cout << "hi there " << camera->id() << std::endl;
 
     }
 
-    for (;;) {
+    auto cameras = cm->cameras();
 
-        capture.read(frame);
+    if (cameras.empty()) {
 
-        if (frame.empty()) {
+        std::cout << "No cameras found." << std::endl;
+        cm->stop();
 
-            cerr << "Recieved empty frame." << endl;
-            break;
-
-        }
-
-        imshow("Live", frame);
-
-        if (waitKey(5) >= 0) {
-
-            break;
-
-        }
+        return EXIT_FAILURE;
 
     }
+
+    std::string cameraId = cameras[0]->id();
+
+    camera = cm->get(cameraId);
+
+    // prevents another application from stealing the camera
+    camera->acquire();
+    
+    std::unique_ptr<CameraConfiguration> config = camera->generateConfiguration( { StreamRole::Viewfinder } );
+
+    StreamConfiguration &streamConfig = config->at(0);
+
+    std::cout << "Default viewfinder config is: " << streamConfig.toString() << std::endl;
+
+    config->validate();
+    std::cout << "Validated viewfinder config is: " << streamConfig.toString() << std::endl;
+
+    camera->configure(config.get());
+
+
+    camera->stop();
+    camera->release();
+    camera.reset();
+    cm->stop();
 
     return 0;
-    
+
 }
