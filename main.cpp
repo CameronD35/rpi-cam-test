@@ -21,11 +21,9 @@ class RPiCam {
         std::shared_ptr<Camera> camera;
 
         std::unique_ptr<CameraConfiguration> config;
-        // StreamConfiguration& streamConfig = nullptr;
-        FrameBufferAllocator *allocator;
-        Stream* stream;
+        std::unique_ptr<FrameBufferAllocator> allocator;
+        Stream* stream = nullptr;
         std::vector<std::unique_ptr<Request>> requests;
-        // std::vector<std::unique_ptr<FrameBuffer>> &buffers = nullptr;
 
         void requestComplete(Request *request);
 
@@ -46,17 +44,17 @@ RPiCam::RPiCam(CameraManager &manager, std::string id) {
 
     this->id = id;
 
-    this->camera = manager.get(id);
+    camera = manager.get(id);
 
 }
 
 void RPiCam::reset() {
 
-    this->camera->stop();
-    this->camera->release();
-    this->camera.reset();
-    this->allocator->free(stream);
-    delete this->allocator;
+    camera->stop();
+    camera->release();
+    allocator->free(stream);
+    allocator.reset();
+    camera.reset();
 
 }
 
@@ -98,9 +96,9 @@ void RPiCam::requestComplete(Request *request) {
 
 int RPiCam::allocateBuffers() {
 
-    for (StreamConfiguration &cfg : *(this->config)) {
+    for (StreamConfiguration &cfg : *(config)) {
 
-        int ret = this->allocator->allocate(cfg.stream());
+        int ret = allocator->allocate(cfg.stream());
 
         if (ret < 0) {
 
@@ -109,7 +107,7 @@ int RPiCam::allocateBuffers() {
 
         }
         
-        size_t allocated = this->allocator->buffers(cfg.stream()).size();
+        size_t allocated = allocator->buffers(cfg.stream()).size();
         // std::cout << "Allocated " << allocated << " buffers for stream." << std::endl;
     
     }
@@ -121,39 +119,39 @@ int RPiCam::allocateBuffers() {
 int RPiCam::setup() {
 
     // prevents another application from stealing and running off with the camera
-    this->camera->acquire();
+    camera->acquire();
     
-    this->config = this->camera->generateConfiguration( { StreamRole::Viewfinder } );
+    config = camera->generateConfiguration( { StreamRole::Viewfinder } );
 
 
     
     // chooses the first (and only) config available for the camera
-    StreamConfiguration& streamConfig = this->config->at(0);
+    StreamConfiguration& streamConfig = config->at(0);
     std::cout << "Default viewfinder config is: " << streamConfig.toString() << std::endl;
 
     // used if we were to adjust the output sizing stored in streamConfig
-    this->config->validate();
+    config->validate();
     std::cout << "Validated viewfinder config is: " << streamConfig.toString() << std::endl;
 
     // provides a validated config
-    this->camera->configure(this->config.get());
+    camera->configure(config.get());
 
-    this->format = streamConfig.pixelFormat.toString();
+    format = streamConfig.pixelFormat.toString();
 
-    this->allocator = new FrameBufferAllocator(this->camera);
+    allocator = std::make_unique<FrameBufferAllocator>(camera);
 
     // fills request vector by creating Request instances from camera and associates a buffer for each of them
     this->allocateBuffers();
 
-    Stream* stream = streamConfig.stream();
-    const std::vector<std::unique_ptr<FrameBuffer>> &buffers = this->allocator->buffers(stream);
+    stream = streamConfig.stream();
+    const std::vector<std::unique_ptr<FrameBuffer>> &buffers = allocator->buffers(stream);
     // const std::vector<std::unique_ptr<FrameBuffer>> &buffers = allocator->buffers(stream);
     // std::vector<std::unique_ptr<Request>> requests;
 
     // fills request vector by creating Request instances from camera and associates a buffer for each of them
     for (unsigned int i = 0; i < buffers.size(); ++i) {
 
-        std::unique_ptr<Request> request = this->camera->createRequest();
+        std::unique_ptr<Request> request = camera->createRequest();
 
         if (!request) {
 
@@ -172,7 +170,7 @@ int RPiCam::setup() {
 
         }
 
-        this->requests.push_back(std::move(request));
+        requests.push_back(std::move(request));
 
     }
 
@@ -182,16 +180,16 @@ int RPiCam::setup() {
     // within it are completed
 
     // connects slot function
-    this->camera->requestCompleted.connect(this, &RPiCam::requestComplete);
+    camera->requestCompleted.connect(this, &RPiCam::requestComplete);
 
     // std::cout << "hello" << std::endl;
 
     // starts camera and queues up all previously created requests
-    this->camera->start();
+    camera->start();
 
-    for (std::unique_ptr<Request> &request : this->requests) {
+    for (std::unique_ptr<Request> &request : requests) {
         std::cout << "hello" << std::endl;
-        this->camera->queueRequest(request.get());
+        camera->queueRequest(request.get());
 
     }
 
@@ -223,95 +221,10 @@ int main(int argc, char** argv) {
     RPiCam* cam1 = new RPiCam(*cm, cameraId);
 
     cam1->setup();
-    cam1->reset();
-    // camera = cm->get(cameraId);
 
-    // std::unique_ptr<CameraConfiguration> config;
-    // StreamConfiguration& streamConfig = setupCamera(*camera, config);
-
-    // std::string format = streamConfig.pixelFormat.toString();
-
-    // std::cout << "Pixel format: " << format << std::endl;
-    // // std::cout << streamConfig.size() << std::endl;
-
-    // // allocates memory for the camera and returns the amount of buffers created
-    // FrameBufferAllocator *allocator = new FrameBufferAllocator(camera);
-
-    // for (StreamConfiguration &cfg : *config) {
-
-    //     int ret = allocator->allocate(cfg.stream());
-
-    //     if (ret < 0) {
-
-    //         std::cerr << "Cannot allocate buffers." << std::endl;
-    //         return -ENOMEM;
-
-    //     }
-        
-    //     size_t allocated = allocator->buffers(cfg.stream()).size();
-    //     std::cout << "Allocated " << allocated << " buffers for stream." << std::endl;
-    
-    // }
-
-    // // retrieves list of buffers using the allocator
-    // // creates vector of requests to be submitted to camera
-    // Stream *stream = streamConfig.stream();
-    // const std::vector<std::unique_ptr<FrameBuffer>> &buffers = allocator->buffers(stream);
-    // std::vector<std::unique_ptr<Request>> requests;
-
-    // // fills request vector by creating Request instances from camera and associates a buffer for each of them
-    // for (unsigned int i = 0; i < buffers.size(); ++i) {
-
-    //     std::unique_ptr<Request> request = camera->createRequest();
-
-    //     if (!request) {
-
-    //         std::cerr << "Cannot create request." << std::endl;
-    //         return -ENOMEM;
-
-    //     }
-
-    //     const std::unique_ptr<FrameBuffer> &buffer = buffers[i];
-    //     int ret = request->addBuffer(stream, buffer.get());
-
-    //     if (ret < 0) {
-
-    //         std::cerr << "Cannot set buffer for request." << std::endl;
-    //         return ret;
-
-    //     }
-
-    //     requests.push_back(std::move(request));
-
-    // }
-
-    // // uses concept of signals and slots (?)
-    // // Camera::bufferCompleted notifies apps that a buffer with img data is available
-    // // Camera::requestCompleted notifies apps that a request is completed and therefore all the buffers
-    // // within it are completed
-
-    // // connects slot function
-    // camera->requestCompleted.connect(requestComplete);
-
-    // // starts camera and queues up all previously created requests
-    // camera->start();
-    // for (std::unique_ptr<Request> &request : requests) {
-
-    //     camera->queueRequest(request.get());
-
-    // }
-
-    // since cameramanager spawns its own thread, our app can whatever it likes and only needs to respond to signals emitted by libcamera
-    // henchforth, we pause the main app for 3 seconds so it doesn't automatically terminate
     std::this_thread::sleep_for(3000ms);
 
-    // stops camera, frees allocator and memory, releases camera, then stops camera manager
-    // camera->stop();
-    // allocator->free(stream);
-    // delete allocator;
-    // camera->release();
-    // camera.reset();
-    // cm->stop();
+    cam1->reset();
 
     return 0;
 
