@@ -6,6 +6,7 @@
 #include <memory>
 #include <thread>
 #include <sys/mman.h>
+#include <opencv2/core.hpp>
 
 using namespace libcamera;
 
@@ -24,7 +25,7 @@ class RPiCam {
 
         void requestComplete(Request *request);
         int allocateBuffers();
-        void* mmapPlane(const FrameBuffer::Plane &plane);
+        uint8_t* mmapPlane(const FrameBuffer::Plane &plane);
 
     public:
 

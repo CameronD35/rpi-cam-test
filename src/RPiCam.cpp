@@ -41,11 +41,11 @@ void RPiCam::requestComplete(Request *request) {
 
         for (const FrameBuffer::Plane &plane : buffer->planes()) {
 
-            uint8_t *address = static_cast<uint8_t *>(this->mmapPlane(plane));
+            uint8_t *address = this->mmapPlane(plane);
 
             for (int i = 1; i < 10; ++i) {
-
-                std::cout << " i: " << std::setw(6) << std::setfill('0') << i << " data: " << static_cast<unsigned int>(address[i]);
+                // I promise that this type cast is just for printing!
+                std::cout << " i: " << std::setw(6) << std::setfill('0') << i << " data in format (" << this->format << "): " << static_cast<unsigned int>(address[i]);
 
             }
 
@@ -58,13 +58,6 @@ void RPiCam::requestComplete(Request *request) {
             };
 
         }
-
-        // for (const FrameMetadata::Plane &plane : metadata.planes()) {
-
-        //     std::cout << plane.bytesused;
-        //     if (++nplane < metadata.planes().size()) std::cout << "/";
-
-        // }
 
         std::cout << std::endl;
 
@@ -177,13 +170,14 @@ int RPiCam::setup() {
 
 }
 
-void* RPiCam::mmapPlane(const FrameBuffer::Plane &plane) {
+// https://www.man7.org/linux/man-pages/man2/mmap.2.html
+uint8_t* RPiCam::mmapPlane(const FrameBuffer::Plane &plane) {
 
     const int fd = plane.fd.get();
 
-
     // size_t actualLength = static_cast<size_t>(plane.length + plane.offset);
 
+    // mmaps the plane with a read flag
     void *address = mmap(nullptr, plane.length, PROT_READ, MAP_SHARED, fd, 0);
 
     if (address == MAP_FAILED) {
@@ -195,7 +189,8 @@ void* RPiCam::mmapPlane(const FrameBuffer::Plane &plane) {
 
     std::cout << "Mmap success!" << std::endl;
 
-    return address;
+    // this casting is necessary for indexing to work properly
+    return static_cast<uint8_t*>(address);
 
 }
 
