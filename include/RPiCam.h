@@ -5,6 +5,8 @@
 #include <sstream>
 #include <memory>
 #include <thread>
+#include <sys/mman.h>
+
 using namespace libcamera;
 
 #ifndef RPICAM_H
@@ -22,6 +24,7 @@ class RPiCam {
 
         void requestComplete(Request *request);
         int allocateBuffers();
+        void* mapPlane(const FrameBuffer::Plane &plane);
 
     public:
 

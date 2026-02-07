@@ -1,6 +1,7 @@
 // this code was made following this tutorial: https://libcamera.org/guides/application-developer.html
 #include "RPiCam.h"
 
+using namespace libcamera;
 using namespace std::chrono_literals;
 
 std::vector<std::string> getCameras(CameraManager& cameraManager);
@@ -16,7 +17,7 @@ int main(int argc, char** argv) {
     cameraIDs = getCameras(*cm);
 
     // ensures we actually got cameras fr
-    if (cameraIDs.size() == 0) { std::cout << "No cameras found." << std::endl; }
+    if (cameraIDs.size() == 0) { std::cout << "No cameras found." << std::endl; cm->stop(); return -1; }
 
     // grabs the first camera available
     std::string cameraId = cameraIDs[0];

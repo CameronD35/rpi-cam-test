@@ -39,6 +39,12 @@ void RPiCam::requestComplete(Request *request) {
 
         unsigned int nplane = 0;
 
+        for (const FrameBuffer::Plane &plane : buffer->planes()) {
+
+            this->mapPlane(plane);
+
+        }
+
         for (const FrameMetadata::Plane &plane : metadata.planes()) {
 
             std::cout << plane.bytesused;
@@ -107,8 +113,6 @@ int RPiCam::setup() {
 
     stream = streamConfig.stream();
     const std::vector<std::unique_ptr<FrameBuffer>> &buffers = allocator->buffers(stream);
-    // const std::vector<std::unique_ptr<FrameBuffer>> &buffers = allocator->buffers(stream);
-    // std::vector<std::unique_ptr<Request>> requests;
 
     // fills request vector by creating Request instances from camera and associates a buffer for each of them
     for (unsigned int i = 0; i < buffers.size(); ++i) {
@@ -158,3 +162,24 @@ int RPiCam::setup() {
     return 0;
 
 }
+
+void* RPiCam::mapPlane(const FrameBuffer::Plane &plane) {
+
+    const int fd = plane.fd.get();
+    // auto &info = buffers[fd];
+
+    void *address = mmap(nullptr, plane.length, PROT_READ, MAP_SHARED, fd, 0);
+
+    if (address == MAP_FAILED) {
+
+        std::cout << "Failed to map plane." << std::endl;
+        return nullptr;
+
+    }
+
+    std::cout << "Map success!" << std::endl;
+
+    return address;
+
+}
+
