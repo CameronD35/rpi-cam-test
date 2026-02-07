@@ -35,22 +35,36 @@ void RPiCam::requestComplete(Request *request) {
         const FrameMetadata &metadata = buffer->metadata();
 
         // prints frame sequence # and details of planes (what's a plane?)
-        std::cout << " seq: " << std::setw(6) << std::setfill('0') << metadata.sequence << " bytesused: ";
+        // std::cout << " seq: " << std::setw(6) << std::setfill('0') << metadata.sequence << " bytesused: ";
 
         unsigned int nplane = 0;
 
         for (const FrameBuffer::Plane &plane : buffer->planes()) {
 
-            this->mapPlane(plane);
+            uint8_t *address = static_cast<uint8_t *>(this->mmapPlane(plane));
+
+            for (int i = 1; i < 10; ++i) {
+
+                std::cout << " i: " << std::setw(6) << std::setfill('0') << i << " data: " << static_cast<unsigned int>(address[i]);
+
+            }
+
+            std::cout << std::endl;
+
+            if (munmap(address, plane.length) == -1) {
+
+                std::cout << "I couldn't unmmap this, yo" << std::endl;
+
+            };
 
         }
 
-        for (const FrameMetadata::Plane &plane : metadata.planes()) {
+        // for (const FrameMetadata::Plane &plane : metadata.planes()) {
 
-            std::cout << plane.bytesused;
-            if (++nplane < metadata.planes().size()) std::cout << "/";
+        //     std::cout << plane.bytesused;
+        //     if (++nplane < metadata.planes().size()) std::cout << "/";
 
-        }
+        // }
 
         std::cout << std::endl;
 
@@ -163,21 +177,23 @@ int RPiCam::setup() {
 
 }
 
-void* RPiCam::mapPlane(const FrameBuffer::Plane &plane) {
+void* RPiCam::mmapPlane(const FrameBuffer::Plane &plane) {
 
     const int fd = plane.fd.get();
-    // auto &info = buffers[fd];
+
+
+    // size_t actualLength = static_cast<size_t>(plane.length + plane.offset);
 
     void *address = mmap(nullptr, plane.length, PROT_READ, MAP_SHARED, fd, 0);
 
     if (address == MAP_FAILED) {
 
-        std::cout << "Failed to map plane." << std::endl;
+        std::cout << "Failed to mmap plane." << std::endl;
         return nullptr;
 
     }
 
-    std::cout << "Map success!" << std::endl;
+    std::cout << "Mmap success!" << std::endl;
 
     return address;
 

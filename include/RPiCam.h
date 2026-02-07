@@ -24,7 +24,7 @@ class RPiCam {
 
         void requestComplete(Request *request);
         int allocateBuffers();
-        void* mapPlane(const FrameBuffer::Plane &plane);
+        void* mmapPlane(const FrameBuffer::Plane &plane);
 
     public:
 
