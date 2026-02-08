@@ -27,8 +27,6 @@ int main(int argc, char** argv) {
     RPiCam* cam1 = new RPiCam(*cm, cameraId_1);
     RPiCam* cam2 = new RPiCam(*cm, cameraId_2);
 
-    // cam1->setup();
-
     std::thread cam1_thread{runCam, cam1};
     cam1_thread.detach();
 
@@ -36,8 +34,6 @@ int main(int argc, char** argv) {
     cam2_thread.detach();
 
     std::this_thread::sleep_for(12000ms);
-
-    // cam1->reset();
 
     return 0;
 
