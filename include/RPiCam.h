@@ -7,6 +7,8 @@
 #include <thread>
 #include <sys/mman.h>
 #include <opencv2/core.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv2/imgproc.hpp>
 
 using namespace libcamera;
 
@@ -17,6 +19,9 @@ class RPiCam {
 
     private:
 
+        static int camera_count;
+        int camera_number;
+
         std::shared_ptr<Camera> camera;
         std::unique_ptr<CameraConfiguration> config;
         std::unique_ptr<FrameBufferAllocator> allocator;
@@ -26,6 +31,8 @@ class RPiCam {
         void requestComplete(Request *request);
         int allocateBuffers();
         uint8_t* mmapPlane(const FrameBuffer::Plane &plane);
+        int processPlane(uint8_t* planeAddr, unsigned int length);
+        std::string windowName;
 
     public:
 

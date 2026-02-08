@@ -2,11 +2,23 @@
 
 using namespace libcamera;
 
+int RPiCam::camera_count = 0;
+
 RPiCam::RPiCam(CameraManager &manager, std::string id) {
+
+    camera_number = ++camera_count;
 
     this->id = id;
 
     camera = manager.get(id);
+
+    windowName = "Cam " + std::to_string(camera_number);
+
+    std::cout << windowName << std::endl;
+
+    // cv::namedWindow(windowName, cv::WINDOW_AUTOSIZE);
+
+    // cv::waitKey(1);
 
 }
 
@@ -34,32 +46,21 @@ void RPiCam::requestComplete(Request *request) {
         FrameBuffer *buffer = bufferPair.second;
         const FrameMetadata &metadata = buffer->metadata();
 
-        // prints frame sequence # and details of planes (what's a plane?)
-        // std::cout << " seq: " << std::setw(6) << std::setfill('0') << metadata.sequence << " bytesused: ";
-
         unsigned int nplane = 0;
+
+        // cvMat mat = cv::Mat(3, 3)
 
         for (const FrameBuffer::Plane &plane : buffer->planes()) {
 
             uint8_t *address = this->mmapPlane(plane);
 
-            for (int i = 1; i < 10; ++i) {
-                // I promise that this type cast is just for printing!
-                std::cout << " i: " << std::setw(6) << std::setfill('0') << i << " data in format (" << this->format << "): " << static_cast<unsigned int>(address[i]);
+            unsigned int length = plane.length;
 
-            }
-
-            std::cout << std::endl;
-
-            if (munmap(address, plane.length) == -1) {
-
-                std::cout << "I couldn't unmmap this, yo" << std::endl;
-
-            };
+            int process = processPlane(address, length);
 
         }
 
-        std::cout << std::endl;
+        // std::cout << std::endl;
 
         // reuses request and re-queues it to the camera
         request->reuse(Request::ReuseBuffers);
@@ -83,7 +84,6 @@ int RPiCam::allocateBuffers() {
         }
         
         size_t allocated = allocator->buffers(cfg.stream()).size();
-        // std::cout << "Allocated " << allocated << " buffers for stream." << std::endl;
     
     }
 
@@ -102,11 +102,11 @@ int RPiCam::setup() {
     
     // chooses the first (and only) config available for the camera
     StreamConfiguration& streamConfig = config->at(0);
-    std::cout << "Default viewfinder config is: " << streamConfig.toString() << std::endl;
+    // std::cout << "Default viewfinder config is: " << streamConfig.toString() << std::endl;
 
     // used if we were to adjust the output sizing stored in streamConfig
     config->validate();
-    std::cout << "Validated viewfinder config is: " << streamConfig.toString() << std::endl;
+    // std::cout << "Validated viewfinder config is: " << streamConfig.toString() << std::endl;
 
     // provides a validated config
     camera->configure(config.get());
@@ -161,7 +161,7 @@ int RPiCam::setup() {
     camera->start();
 
     for (std::unique_ptr<Request> &request : requests) {
-        std::cout << "hello" << std::endl;
+        // std::cout << "hello" << std::endl;
         camera->queueRequest(request.get());
 
     }
@@ -187,10 +187,43 @@ uint8_t* RPiCam::mmapPlane(const FrameBuffer::Plane &plane) {
 
     }
 
-    std::cout << "Mmap success!" << std::endl;
+    // std::cout << "Mmap success! on Cam " << camera_number << std::endl;
 
     // this casting is necessary for indexing to work properly
     return static_cast<uint8_t*>(address);
 
 }
 
+int RPiCam::processPlane(uint8_t* planeAddr, unsigned int length) {
+
+    cv::Mat raw_frame(600, 800, CV_8UC4, planeAddr);
+
+    cv::Mat formatted_frame;
+
+    cv::cvtColor(raw_frame, formatted_frame, cv::COLOR_BGRA2BGR);
+
+    // the most janky way of doing this but the dynamic windows were being weird
+    // will fix later...
+    if (camera_number == 1) {
+
+        cv::imshow("test", formatted_frame);
+
+        cv::waitKey(1);
+
+    } else {
+
+        cv::imshow("test2", formatted_frame);
+
+        cv::waitKey(1);
+
+    }
+
+    if (munmap(planeAddr, length) == -1) {
+
+        std::cout << "I couldn't unmmap this, yo" << std::endl;
+
+    };
+
+    return 0;
+
+}

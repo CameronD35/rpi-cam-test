@@ -5,6 +5,7 @@ using namespace libcamera;
 using namespace std::chrono_literals;
 
 std::vector<std::string> getCameras(CameraManager& cameraManager);
+int runCam(RPiCam* cam);
 
 int main(int argc, char** argv) {
 
@@ -20,20 +21,41 @@ int main(int argc, char** argv) {
     if (cameraIDs.size() == 0) { std::cout << "No cameras found." << std::endl; cm->stop(); return -1; }
 
     // grabs the first camera available
-    std::string cameraId = cameraIDs[0];
+    std::string cameraId_1 = cameraIDs[0];
+    std::string cameraId_2 = cameraIDs[1];
 
-    RPiCam* cam1 = new RPiCam(*cm, cameraId);
+    RPiCam* cam1 = new RPiCam(*cm, cameraId_1);
+    RPiCam* cam2 = new RPiCam(*cm, cameraId_2);
 
-    cam1->setup();
+    // cam1->setup();
 
-    std::this_thread::sleep_for(3000ms);
+    std::thread cam1_thread{runCam, cam1};
+    cam1_thread.detach();
 
-    cam1->reset();
+    std::thread cam2_thread{runCam, cam2};
+    cam2_thread.detach();
+
+    std::this_thread::sleep_for(12000ms);
+
+    // cam1->reset();
 
     return 0;
 
 }
 
+int runCam(RPiCam* cam) {
+
+    std::cout << "hello" << std::endl;
+
+    cam->setup();
+
+    std::this_thread::sleep_for(10000ms);
+
+    cam->reset();
+
+    return 0;
+
+}
 // gets all of the cameras using the camera manager 
 std::vector<std::string> getCameras(CameraManager& cameraManager) {
 
