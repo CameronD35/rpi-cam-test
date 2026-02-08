@@ -45,6 +45,8 @@ int runCam(RPiCam* cam) {
 
     cam->setup();
 
+    cam->record();
+
     std::this_thread::sleep_for(10000ms);
 
     cam->reset();
@@ -52,6 +54,7 @@ int runCam(RPiCam* cam) {
     return 0;
 
 }
+
 // gets all of the cameras using the camera manager 
 std::vector<std::string> getCameras(CameraManager& cameraManager) {
 

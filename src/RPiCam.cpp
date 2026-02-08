@@ -14,12 +14,6 @@ RPiCam::RPiCam(CameraManager &manager, std::string id) {
 
     windowName = "Cam " + std::to_string(camera_number);
 
-    std::cout << windowName << std::endl;
-
-    // cv::namedWindow(windowName, cv::WINDOW_AUTOSIZE);
-
-    // cv::waitKey(1);
-
 }
 
 void RPiCam::reset() {
@@ -48,8 +42,6 @@ void RPiCam::requestComplete(Request *request) {
 
         unsigned int nplane = 0;
 
-        // cvMat mat = cv::Mat(3, 3)
-
         for (const FrameBuffer::Plane &plane : buffer->planes()) {
 
             uint8_t *address = this->mmapPlane(plane);
@@ -59,8 +51,6 @@ void RPiCam::requestComplete(Request *request) {
             int process = processPlane(address, length);
 
         }
-
-        // std::cout << std::endl;
 
         // reuses request and re-queues it to the camera
         request->reuse(Request::ReuseBuffers);
@@ -111,6 +101,10 @@ int RPiCam::setup() {
     // provides a validated config
     camera->configure(config.get());
 
+    const std::string filename = windowName + ".mp4";
+
+    writer = cv::VideoWriter(filename, cv::VideoWriter::fourcc('A', 'V', 'C', '1'), 30.0, cv::Size());
+
     format = streamConfig.pixelFormat.toString();
 
     allocator = std::make_unique<FrameBufferAllocator>(camera);
@@ -155,13 +149,17 @@ int RPiCam::setup() {
     // connects slot function
     camera->requestCompleted.connect(this, &RPiCam::requestComplete);
 
-    // std::cout << "hello" << std::endl;
+    return 0;
+
+}
+
+int RPiCam::record() {
 
     // starts camera and queues up all previously created requests
     camera->start();
 
     for (std::unique_ptr<Request> &request : requests) {
-        // std::cout << "hello" << std::endl;
+
         camera->queueRequest(request.get());
 
     }
@@ -198,25 +196,19 @@ int RPiCam::processPlane(uint8_t* planeAddr, unsigned int length) {
 
     cv::Mat raw_frame(600, 800, CV_8UC4, planeAddr);
 
+    cv::Mat color_frame;
+
+    // removes padding data
+    cv::cvtColor(raw_frame, color_frame, cv::COLOR_BGRA2BGR);
+
     cv::Mat formatted_frame;
 
-    cv::cvtColor(raw_frame, formatted_frame, cv::COLOR_BGRA2BGR);
+    // rotates 180 degrees because frame is upside-down by default
+    cv::rotate(color_frame, formatted_frame, cv::ROTATE_180);
 
-    // the most janky way of doing this but the dynamic windows were being weird
-    // will fix later...
-    if (camera_number == 1) {
+    cv::imshow(windowName, formatted_frame);
 
-        cv::imshow("test", formatted_frame);
-
-        cv::waitKey(1);
-
-    } else {
-
-        cv::imshow("test2", formatted_frame);
-
-        cv::waitKey(1);
-
-    }
+    cv::waitKey(1);
 
     if (munmap(planeAddr, length) == -1) {
 

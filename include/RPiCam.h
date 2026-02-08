@@ -34,16 +34,21 @@ class RPiCam {
         int processPlane(uint8_t* planeAddr, unsigned int length);
         std::string windowName;
 
+        cv::VideoWriter writer;
+
     public:
 
         std::string id;
         std::string format;
 
-        // stops camera, frees allocator and memory, and releases camera 
+        // stops camera, frees allocator and memory, and releases camera
         void reset();
 
         // sets up camera with all the configurations needed
         int setup();
+
+        // starts recording
+        int record();
 
         // constructor
         RPiCam(CameraManager &manager, std::string id);
