@@ -22,16 +22,16 @@ int main(int argc, char** argv) {
 
     // grabs the first camera available
     std::string cameraId_1 = cameraIDs[0];
-    std::string cameraId_2 = cameraIDs[1];
+    // std::string cameraId_2 = cameraIDs[1];
 
-    RPiCam* cam1 = new RPiCam(*cm, cameraId_1);
-    RPiCam* cam2 = new RPiCam(*cm, cameraId_2);
+    RPiCam* cam1 = new RPiCam(*cm, cameraId_1, 30);
+    // RPiCam* cam2 = new RPiCam(*cm, cameraId_2);
 
     std::thread cam1_thread{runCam, cam1};
     cam1_thread.detach();
 
-    std::thread cam2_thread{runCam, cam2};
-    cam2_thread.detach();
+    // std::thread cam2_thread{runCam, cam2};
+    // cam2_thread.detach();
 
     std::this_thread::sleep_for(12000ms);
 

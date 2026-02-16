@@ -4,11 +4,25 @@ using namespace libcamera;
 
 int RPiCam::camera_count = 0;
 
+RPiCam::RPiCam(CameraManager &manager, std::string id, int64_t fps) {
+
+    camera_number = ++camera_count;
+
+    this->id = id;
+    this->fps = fps;
+
+    camera = manager.get(id);
+
+    windowName = "Cam " + std::to_string(camera_number);
+
+}
+
 RPiCam::RPiCam(CameraManager &manager, std::string id) {
 
     camera_number = ++camera_count;
 
     this->id = id;
+    this->fps = 30;
 
     camera = manager.get(id);
 
@@ -23,6 +37,10 @@ void RPiCam::reset() {
     allocator->free(stream);
     allocator.reset();
     camera.reset();
+
+    cv::destroyWindow(windowName);
+
+    writer.release();
 
 }
 
@@ -87,8 +105,6 @@ int RPiCam::setup() {
     camera->acquire();
     
     config = camera->generateConfiguration( { StreamRole::Viewfinder } );
-
-
     
     // chooses the first (and only) config available for the camera
     StreamConfiguration& streamConfig = config->at(0);
@@ -101,9 +117,11 @@ int RPiCam::setup() {
     // provides a validated config
     camera->configure(config.get());
 
-    const std::string filename = windowName + ".mp4";
+    const std::string filename = "/home/rsx/Desktop/videos/" + windowName + ".avi";
 
-    writer = cv::VideoWriter(filename, cv::VideoWriter::fourcc('A', 'V', 'C', '1'), 30.0, cv::Size());
+    // creates file for this camera's output in.avi format
+    // TODO: Add new file names for each run so stuff isn't overwritten
+    writer = cv::VideoWriter(filename, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), static_cast<double>(fps), cv::Size(streamConfig.size.width, streamConfig.size.height));
 
     format = streamConfig.pixelFormat.toString();
 
@@ -119,6 +137,14 @@ int RPiCam::setup() {
     for (unsigned int i = 0; i < buffers.size(); ++i) {
 
         std::unique_ptr<Request> request = camera->createRequest();
+
+        // sets autofocus to on
+        ControlList& controls = request->controls();
+
+        controls.set(controls::AfMode, controls::AfModeContinuous);
+        controls.set(controls::FrameDurationLimits, Span<const std::int64_t, 2>({1000000/fps, 1000000/fps}));
+
+        std::cout << controls.get(controls::AfMode).value() << std::endl;
 
         if (!request) {
 
@@ -207,6 +233,8 @@ int RPiCam::processPlane(uint8_t* planeAddr, unsigned int length) {
     cv::rotate(color_frame, formatted_frame, cv::ROTATE_180);
 
     cv::imshow(windowName, formatted_frame);
+
+    writer.write(formatted_frame);
 
     cv::waitKey(1);
 

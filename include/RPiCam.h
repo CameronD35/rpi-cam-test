@@ -27,6 +27,7 @@ class RPiCam {
         std::unique_ptr<FrameBufferAllocator> allocator;
         std::vector<std::unique_ptr<Request>> requests;
         Stream* stream = nullptr;
+        int64_t fps;
 
         void requestComplete(Request *request);
         int allocateBuffers();
@@ -50,7 +51,8 @@ class RPiCam {
         // starts recording
         int record();
 
-        // constructor
+        // constructors
+        RPiCam(CameraManager &manager, std::string id, int64_t fps);
         RPiCam(CameraManager &manager, std::string id);
 
 };
