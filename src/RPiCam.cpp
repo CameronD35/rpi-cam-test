@@ -4,12 +4,14 @@ using namespace libcamera;
 
 int RPiCam::camera_count = 0;
 
-RPiCam::RPiCam(CameraManager &manager, std::string id, int64_t fps) {
+RPiCam::RPiCam(CameraManager &manager, std::string id, int64_t fps, int res[2]) {
 
     camera_number = ++camera_count;
 
     this->id = id;
     this->fps = fps;
+    this->res[0] = res[0];
+    this->res[1] = res[1];
 
     camera = manager.get(id);
 
@@ -109,6 +111,10 @@ int RPiCam::setup() {
     // chooses the first (and only) config available for the camera
     StreamConfiguration& streamConfig = config->at(0);
     // std::cout << "Default viewfinder config is: " << streamConfig.toString() << std::endl;
+
+    // set resolution
+    streamConfig.size.width = res[0];
+    streamConfig.size.height = res[1];
 
     // used if we were to adjust the output sizing stored in streamConfig
     config->validate();
@@ -220,7 +226,7 @@ uint8_t* RPiCam::mmapPlane(const FrameBuffer::Plane &plane) {
 
 int RPiCam::processPlane(uint8_t* planeAddr, unsigned int length) {
 
-    cv::Mat raw_frame(600, 800, CV_8UC4, planeAddr);
+    cv::Mat raw_frame(res[1], res[0], CV_8UC4, planeAddr);
 
     cv::Mat color_frame;
 
