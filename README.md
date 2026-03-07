@@ -48,6 +48,9 @@ _It may be helpful to refer to the official [libcamera documentation on libcamer
 ## TODO
 _Below are features I wish/need to add_
 #### * Add much more detail to the build process! *
+* Add a rolling file system
+  * Create a folder for each run of the application
+  * In each folder, save a file of the left and right camera with the filename format `cam_{L/R}_{seq#}_{res}.avi`
 * Optimise the camera output
   * Currently, the camera _can_ output a 1280x720 (720p) resolution but seems to only record at 15fps in such cases
 * Add arguments that can be passed into the application for
