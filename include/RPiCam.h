@@ -36,6 +36,8 @@ class RPiCam {
         int processPlane(uint8_t* planeAddr, unsigned int length);
         std::string windowName;
 
+        int directoryNum;
+
         cv::VideoWriter writer;
 
     public:
@@ -55,7 +57,7 @@ class RPiCam {
         int record();
 
         // constructors
-        RPiCam(CameraManager &manager, std::string id, int64_t fps, int res[2]);
+        RPiCam(CameraManager &manager, std::string id, int64_t fps, int res[2], int directoryNum);
         RPiCam(CameraManager &manager, std::string id);
 
 };

@@ -1,6 +1,7 @@
 // this code was made following this tutorial: https://libcamera.org/guides/application-developer.html
 #include "RPiCam.h"
 #include <string.h>
+#include <filesystem>
 
 using namespace libcamera;
 using namespace std::chrono_literals;
@@ -10,6 +11,7 @@ using namespace std::chrono_literals;
 
 std::vector<std::string> getCameras(CameraManager& cameraManager);
 int runCam(RPiCam* cam);
+int countDirectories();
 
 int main(int argc, char** argv) {
 
@@ -145,6 +147,8 @@ int main(int argc, char** argv) {
     std::unique_ptr<CameraManager> cm = std::make_unique<CameraManager>();
     cm->start();
 
+    int directoryNum = countDirectories();
+
     // grabs all the cameras available and prints their names
     std::vector<std::string> cameraIDs;
     cameraIDs = getCameras(*cm);
@@ -159,7 +163,7 @@ int main(int argc, char** argv) {
         std::cout << i << std::endl;
 
         std::string cameraId = cameraIDs[i];
-        RPiCam* cam = new RPiCam(*cm, cameraId, fps, res);
+        RPiCam* cam = new RPiCam(*cm, cameraId, fps, res, directoryNum);
         cam->daemonMode = isDaemon;
 
         std::thread cam_thread{runCam, cam};
@@ -211,5 +215,33 @@ std::vector<std::string> getCameras(CameraManager& cameraManager) {
     }
 
     return cameraIDs;
+
+}
+
+int countDirectories(){
+
+    unsigned int dirCount = 0;
+
+    const std::string path = "/home/rsx/Desktop/videos/";
+
+    try {
+
+        for (const auto& subdirectory : std::filesystem::directory_iterator(path)) {
+
+            if (std::filesystem::is_directory(subdirectory.status())) {
+
+                dirCount++;
+
+            }
+
+        }
+
+    } catch (const std::filesystem::filesystem_error& err) {
+
+        std::cerr << "Error accessing filesystem: " << err.what() << std::endl;
+
+    }
+
+    return dirCount;
 
 }

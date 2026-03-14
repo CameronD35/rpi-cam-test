@@ -4,7 +4,7 @@ using namespace libcamera;
 
 int RPiCam::camera_count = 0;
 
-RPiCam::RPiCam(CameraManager &manager, std::string id, int64_t fps, int res[2]) {
+RPiCam::RPiCam(CameraManager &manager, std::string id, int64_t fps, int res[2], int directoryNum) {
 
     camera_number = ++camera_count;
 
@@ -12,6 +12,7 @@ RPiCam::RPiCam(CameraManager &manager, std::string id, int64_t fps, int res[2]) 
     this->fps = fps;
     this->res[0] = res[0];
     this->res[1] = res[1];
+    this->directoryNum = directoryNum;
 
     camera = manager.get(id);
 
@@ -125,7 +126,9 @@ int RPiCam::setup() {
     // provides a validated config
     camera->configure(config.get());
 
-    const std::string filename = "/home/rsx/Desktop/videos/" + windowName + ".avi";
+    std::cout << camera->id() << std::endl;
+
+    const std::string filename = "/home/rsx/Desktop/videos/recording" + std::to_string(directoryNum) + "/cam_" + "L/R" + std::to_string(directoryNum) + "_720p30" + ".avi";
 
     // creates file for this camera's output in.avi format
     // TODO: Add new file names for each run so stuff isn't overwritten
