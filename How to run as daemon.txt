@@ -1,0 +1,28 @@
+How to run as a daemon:
+Note: You only have to do these steps once! To update daemon, just build it and reboot.
+
+1. Get rid of "cv::imshow()". This requires GUI and breaks entire program when run as a daemon
+2. Build with 'make -j4'
+3. Make a service file:
+
+Tutorial:
+https://www.luisllamas.es/en/how-to-use-and-create-daemon-on-raspberry-pi/
+
+3a. Run `sudo nano /etc/systemd/system/rsx_camera.service` and create the new file with following contents.
+
+
+```
+[Unit]
+Description=Start the cameras for RSX 2026
+
+[Service]
+ExecStart=/home/rsx/Desktop/software/rpi-cam-test/build/rpi-cam-test --daemon
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+3b. Run 'sudo systemctl daemon-reload'
+4. Run 'sudo systemctl start rsx_camera'
+5. Run 'sudo systemctl enable rsx_camera' (different command than step 4)
+6. Reboot computer and daemon will be started.

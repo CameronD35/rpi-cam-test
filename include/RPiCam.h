@@ -43,6 +43,8 @@ class RPiCam {
         std::string id;
         std::string format;
 
+        bool daemonMode;
+
         // stops camera, frees allocator and memory, and releases camera
         void reset();
 

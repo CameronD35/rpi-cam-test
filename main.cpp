@@ -1,14 +1,146 @@
 // this code was made following this tutorial: https://libcamera.org/guides/application-developer.html
 #include "RPiCam.h"
+#include <string.h>
 
 using namespace libcamera;
 using namespace std::chrono_literals;
+
+//In seconds
+#define CAMERA_RUN_LENGTH 30
 
 std::vector<std::string> getCameras(CameraManager& cameraManager);
 int runCam(RPiCam* cam);
 
 int main(int argc, char** argv) {
 
+    bool isDaemon;
+    int res[2];
+    int fps;
+    int recLength;
+
+    // Run as daemon with "--daemon" to prevent a GUI from showing and crashing the daemon
+    // (cv::imshow uses Qt which isnt avaliable when run as a daemon)
+    // strcmp help from https://stackoverflow.com/a/2300747
+    std::cout << argv[0] << std::endl;
+    std::cout << argv[1] << std::endl;
+
+    // std::string argList[5] = {"-d", "-r", "-f", "-c", "-l"};
+
+    // name --daemon (daemon mode on; no options) -r {width} {height} -f {framerate} -l {length of recording in sec.}
+    switch(argc) {
+
+        // specify daemon
+        case 2:
+
+            std::cout << "daemon" << std::endl;
+
+            isDaemon = strcmp(argv[1], "--daemon") == 0;
+            res[0] = 1280;
+            res[1] = 720;
+            fps = 30;
+            recLength = 10;
+            
+            break;
+
+        // specify resolution
+        case 5:
+
+            isDaemon = strcmp(argv[1], "--daemon") == 0;
+            try {
+
+                res[0] = std::stoi(std::string(argv[3]));
+                res[1] = std::stoi(std::string(argv[4]));
+
+            } catch (const std::runtime_error e) {
+
+                std::cerr << "Please input numbers for the resolution (-r) argument!" << std::endl;
+
+            }
+
+            fps = 30;
+            recLength = 10;
+
+            break;
+        
+        // specify framerate
+        case 7:
+            
+            isDaemon = strcmp(argv[1], "--daemon") == 0;
+            try {
+
+                res[0] = std::stoi(std::string(argv[3]));
+                res[1] = std::stoi(std::string(argv[4]));
+
+            } catch (const std::runtime_error e) {
+
+                std::cerr << "Please input numbers for the resolution (-r) argument!" << std::endl;
+
+            }
+
+            try {
+
+                fps = std::stoi(std::string(argv[6]));
+
+            } catch (const std::runtime_error e) {
+
+                std::cerr << "Please input numbers for the framerate (-f) argument!" << std::endl;
+
+            }
+
+            recLength = 10;
+
+            break;
+
+        // specify rec length    
+        case 9:
+
+            isDaemon = strcmp(argv[1], "--daemon") == 0;
+            try {
+
+                res[0] = std::stoi(std::string(argv[3]));
+                res[1] = std::stoi(std::string(argv[4]));
+
+            } catch (const std::runtime_error e) {
+
+                std::cerr << "Please input numbers for the resolution (-r) argument!" << std::endl;
+
+            }
+
+            try {
+
+                fps = std::stoi(std::string(argv[6]));
+
+            } catch (const std::runtime_error e) {
+
+                std::cerr << "Please input numbers for the framerate (-f) argument!" << std::endl;
+
+            }
+
+            try {
+
+                recLength = std::stoi(std::string(argv[8]));
+
+            } catch (const std::runtime_error e) {
+
+                std::cerr << "Please input numbers for the reording length (-l) argument!" << std::endl;
+
+            }
+
+            break;
+
+            // no arguments provided, setting to non-daemon mode w/ defaults
+        default:
+
+            isDaemon = false;
+            res[0] = 1280;
+            res[1] = 720;
+            fps = 30;
+            recLength = 10;
+
+            break;
+
+    }
+    
     // create a camera manager
     std::unique_ptr<CameraManager> cm = std::make_unique<CameraManager>();
     cm->start();
@@ -20,22 +152,22 @@ int main(int argc, char** argv) {
     // ensures we actually got cameras fr
     if (cameraIDs.size() == 0) { std::cout << "No cameras found." << std::endl; cm->stop(); return -1; }
 
-    int res[2] = {1280, 720};
+    std::cout << cameraIDs.size() << std::endl;
 
-    // grabs the first camera available
-    std::string cameraId_1 = cameraIDs[0];
-    std::string cameraId_2 = cameraIDs[1];
+    for (int i = 0; i < cameraIDs.size(); i++) {
 
-    RPiCam* cam1 = new RPiCam(*cm, cameraId_1, 30, res);
-    RPiCam* cam2 = new RPiCam(*cm, cameraId_2, 30, res);
+        std::cout << i << std::endl;
 
-    std::thread cam1_thread{runCam, cam1};
-    cam1_thread.detach();
+        std::string cameraId = cameraIDs[i];
+        RPiCam* cam = new RPiCam(*cm, cameraId, fps, res);
+        cam->daemonMode = isDaemon;
 
-    std::thread cam2_thread{runCam, cam2};
-    cam2_thread.detach();
+        std::thread cam_thread{runCam, cam};
+        cam_thread.detach();
 
-    std::this_thread::sleep_for(12000ms);
+    }
+
+    std::this_thread::sleep_for(200ms + recLength * 1s);
 
     return 0;
 
@@ -43,13 +175,12 @@ int main(int argc, char** argv) {
 
 int runCam(RPiCam* cam) {
 
-    std::cout << "hello" << std::endl;
-
     cam->setup();
 
     cam->record();
 
-    std::this_thread::sleep_for(10000ms);
+    // TODO: fix this later!
+    std::this_thread::sleep_for(1s * 10);
 
     cam->reset();
 
