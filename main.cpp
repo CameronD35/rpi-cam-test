@@ -148,7 +148,7 @@ int main(int argc, char** argv) {
     cm->start();
 
     int directoryNum = countDirectories();
-
+    // TODO: make a directory with this name: "/home/rsx/Desktop/videos/recording" + std::to_string(directoryNum)
     // grabs all the cameras available and prints their names
     std::vector<std::string> cameraIDs;
     cameraIDs = getCameras(*cm);
