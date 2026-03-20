@@ -128,7 +128,7 @@ int RPiCam::setup() {
 
     std::cout << camera->id() << std::endl;
 
-    const std::string filename = "/home/rsx/Desktop/videos/recording" + std::to_string(directoryNum) + "/cam_" + "L/R" + std::to_string(directoryNum) + "_720p30" + ".avi";
+    const std::string filename = "/home/rsx/Desktop/videos/recording" + std::to_string(directoryNum) + "/cam_" + std::to_string(camera_number) + "_720p30" + ".avi";
 
     // creates file for this camera's output in.avi format
     // TODO: Add new file names for each run so stuff isn't overwritten

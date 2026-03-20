@@ -2,9 +2,12 @@
 #include "RPiCam.h"
 #include <string.h>
 #include <filesystem>
+#include <iostream>
 
 using namespace libcamera;
 using namespace std::chrono_literals;
+
+namespace fs = std::filesystem;
 
 //In seconds
 #define CAMERA_RUN_LENGTH 30
@@ -148,8 +151,18 @@ int main(int argc, char** argv) {
     cm->start();
 
     int directoryNum = countDirectories();
-    // TODO: make a directory with this name: "/home/rsx/Desktop/videos/recording" + std::to_string(directoryNum)
-    // grabs all the cameras available and prints their names
+    const std::filesystem::path directoryPath = "/home/rsx/Desktop/videos/recording" + std::to_string(directoryNum);
+    try {
+
+        std::filesystem::create_directories(directoryPath);
+
+    } catch (std::filesystem::filesystem_error& err) {
+
+        std::cerr << "Error creating directory." << std::endl;
+
+    }
+    
+
     std::vector<std::string> cameraIDs;
     cameraIDs = getCameras(*cm);
 
