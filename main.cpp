@@ -148,7 +148,17 @@ int main(int argc, char** argv) {
     cm->start();
 
     int directoryNum = countDirectories();
-    // TODO: make a directory with this name: "/home/rsx/Desktop/videos/recording" + std::to_string(directoryNum)
+    const fs::path directoryPath = "/home/rsx/Desktop/videos/recording" + std::to_string(directoryNum);
+    try {
+        // this function creates the recording(#) directory plus all of the parent ones too!
+        std::fs::create_directories(directoryPath);
+        
+    } catch (std::fs::filesystem_error& err) {
+
+        std::cerr << "Error creating directory." << std::endl;
+
+    }
+    
     // grabs all the cameras available and prints their names
     std::vector<std::string> cameraIDs;
     cameraIDs = getCameras(*cm);
