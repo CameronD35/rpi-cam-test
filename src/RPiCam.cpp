@@ -110,14 +110,23 @@ int RPiCam::setup() {
     camera->acquire();
     
     config = camera->generateConfiguration( { StreamRole::Viewfinder } );
+
+    config->sensorConfig->outputSize = Size(2304, 1296);
+
+    StreamConfiguration rawConfig;
+
+    rawConfig.size = Size(2304, 1296);
+    rawConfig.pixelFormat = formats::SRGGB10_CSI2P;
+
+    config->addConfiguration(rawConfig);
     
     // chooses the first (and only) config available for the camera
-    StreamConfiguration& streamConfig = config->at(0);
+    StreamConfiguration& streamConfig = config->at(0); 
     // std::cout << "Default viewfinder config is: " << streamConfig.toString() << std::endl;
 
     // set resolution
     streamConfig.size.width = res[0];
-    streamConfig.size.height = res[1];
+    streamConfig.size.height = res[1];                                                            
 
     // used if we were to adjust the output sizing stored in streamConfig
     config->validate();

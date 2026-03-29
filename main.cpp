@@ -40,10 +40,10 @@ int main(int argc, char** argv) {
             std::cout << "daemon" << std::endl;
 
             isDaemon = strcmp(argv[1], "--daemon") == 0;
-            res[0] = 2304;
-            res[1] = 1296;
+            res[0] = 1280;
+            res[1] = 720;
             fps = 30;
-            recLength = 10;
+            recLength = 120;
             
             break;
 
@@ -137,8 +137,8 @@ int main(int argc, char** argv) {
         default:
 
             isDaemon = false;
-            res[0] = 2304;
-            res[1] = 1296;
+            res[0] = 1280;
+            res[1] = 720;
             fps = 30;
             recLength = 10;
 
@@ -184,7 +184,7 @@ int main(int argc, char** argv) {
 
     }
 
-    std::this_thread::sleep_for(200ms + 120 * 1s);
+    std::this_thread::sleep_for(200ms + 10 * 1s);
 
     return 0;
 
@@ -197,7 +197,7 @@ int runCam(RPiCam* cam) {
     cam->record();
 
     // TODO: fix this later!
-    std::this_thread::sleep_for(1s * 120);
+    std::this_thread::sleep_for(1s * 10);
 
     cam->reset();
 
