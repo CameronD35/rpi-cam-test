@@ -251,14 +251,8 @@ int RPiCam::processPlane(uint8_t* planeAddr, unsigned int length) {
 
     // rotates 180 degrees because frame is upside-down by default
     cv::rotate(color_frame, formatted_frame, cv::ROTATE_180);
-
-    bool isHeadless() {
-
-        return (std::getenv("DISPLAY") == nullptr);
-        
-    }
     
-    if (!daemonMode || !isHeadless())
+    if (!daemonMode || (std::getenv("DISPLAY") == nullptr))
         cv::imshow(windowName, formatted_frame);
 
     writer.write(formatted_frame);
