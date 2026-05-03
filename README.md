@@ -8,6 +8,39 @@ This program uses the following libraries:
 ## Building the Program
 To build the project use [CMake](https://cmake.org).
 
+1) Before doing anything, simply run:
+```bash
+sudo apt update && sudo apt full-upgrade -y
+```
+
+2) The next step is to install cmake on your device:
+```bash
+sudo apt install build-essential cmake pkg-config -y
+```
+
+3) Once OpenCV is installed, you may go ahead and install the OpenCV and libcamera libraries:
+```bash
+sudo apt install libopencv-dev -y && sudo apt install -y libcamera-dev libcamera-tools
+```
+* Keep in mind that we are using the C++ version of OpenCV, not Python!
+
+4) Next up, clone the repository:
+```bash
+git clone https://github.com/CameronD35/rpi-cam-test
+```
+(If git is not installed you can run `sudo apt install git`)
+
+5) Now, the fun stuff! Navigate to the `rpi-cam-test/` directory and create a `build/` directory:
+```bash
+mkdir build
+```
+
+6) Once made, go into the directory and run cmake:
+```bash
+cd build && cmake ..
+```
+
+7) Now all you need to do is run `make -j4` while in the `build/` directory and you should see a new file titled `rpi-cam-test` pop up. You should be all set now!
 
 ## What You Can Quickly Change
 _`main.cpp` contains the key parameters. Below are the changes you can make without changing the `RPiCam` class._
