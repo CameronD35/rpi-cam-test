@@ -77,19 +77,3 @@ controls.set(controls::AfMode, controls::AfModeContinuous);
 _It may be helpful to refer to the official [libcamera documentation on libcamera::ControlList class](https://libcamera.org/api-html/classlibcamera_1_1ControlList.html)._
 
 * While you may change anything else, anything not mentioned is pretty much core to how the program runs and is unlikely to change the output!
-
-## TODO
-_Below are features I wish/need to add_
-#### * Add much more detail to the build process! *
-* Add a rolling file system
-  * Create a folder for each run of the application
-  * In each folder, save a file of the left and right camera with the filename format `cam_{L/R}_{seq#}_{res}.avi`
-* ~~Optimise the camera output~~
-  * ~~Currently, the camera _can_ output a 1280x720 (720p) resolution but seems to only record at 15fps in such cases~~
-* ~~Add arguments that can be passed into the application for~~
-  * ~~Resolution~~
-  * ~~Framerate~~
-  * ~~\# of cameras~~
-  * ~~Length of recording~~
-  * ~~Footage GUI display on/off~~
-* Add much more detail to the build process
